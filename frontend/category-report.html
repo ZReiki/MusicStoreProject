@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Звіт за категоріями | MusicStore</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+    <div id="header-placeholder"></div>
+
+    <div class="max-w-5xl mx-auto px-4 py-8 space-y-6">
+        
+        <nav class="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li><a href="index.html" class="hover:text-blue-600 transition-colors flex items-center gap-1"><i data-lucide="store" class="w-3.5 h-3.5"></i> Магазин</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li><a href="admin-dashboard.html" class="hover:text-blue-600 transition-colors flex items-center gap-1"><i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Панель</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li class="text-gray-900 font-semibold flex items-center gap-1"><i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-blue-600"></i> Звіт за категоріями</li>
+            </ol>
+        </nav>
+
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-2">
+                <i data-lucide="pie-chart" class="w-8 h-8 text-blue-600"></i> Звіт «Продажі за місяць за категоріями»
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">Зведені фінансові показники обсягів та сум реалізації СУБД MySQL</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-end gap-4">
+            <div class="flex-1 grid grid-cols-2 gap-4 w-full">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Оберіть Місяць</label>
+                    <select id="reportMonth" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-medium">
+                        <option value="1">Січень</option><option value="2">Лютий</option><option value="3">Березень</option>
+                        <option value="4">Квітень</option><option value="5" selected>Травень</option><option value="6">Червень</option>
+                        <option value="7">Липень</option><option value="8">Серпень</option><option value="9">Вересень</option>
+                        <option value="10">Жовтень</option><option value="11">Листопад</option><option value="12">Грудень</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Оберіть Рік</label>
+                    <select id="reportYear" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-medium">
+                        <option value="2025">2025</option>
+                        <option value="2026" selected>2026</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="generateMonthlyReport()" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer text-sm">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Сформувати
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[320px]">
+                <h3 class="text-sm font-bold text-gray-800 uppercase mb-4 text-center">Частка виручки</h3>
+                <div class="w-full max-w-[200px] h-[200px] flex items-center justify-center">
+                    <canvas id="monthlyCategoryChart"></canvas>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                <div class="p-5 border-b border-gray-100 font-bold text-gray-900">Деталізація показників</div>
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Категорія інструменту</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200 text-right">Продано за місяць</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200 text-right">Виручка (Поточна)</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200 text-right">Виручка (Минулий місяць)</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200 text-center">Динаміка</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoryTableBody" class="divide-y divide-gray-100"></tbody>
+                        <tfoot class="bg-blue-50/50 font-bold text-gray-900">
+                            <tr>
+                                <td class="py-4 px-6 text-right">Усього:</td>
+                                <td id="totalQuantityCell" class="py-4 px-6 text-right text-gray-700">0 шт.</td>
+                                <td id="totalRevenueCell" class="py-4 px-6 text-right text-blue-700 text-lg font-black">0 ₴</td>
+                                <td id="totalPrevRevenueCell" class="py-4 px-6 text-right text-gray-500">0 ₴</td>
+                                <td id="totalGrowthCell" class="py-4 px-6 text-center text-gray-900 whitespace-nowrap">-</td>                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/header.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/category-report.js"></script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Звіт по продажах | MusicStore</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <div class="py-8 max-w-6xl mx-auto space-y-6 px-4">
+        
+        <div class="flex items-center gap-4 mb-2">
+            <a href="catalog.html" class="p-2 hover:bg-gray-200 bg-gray-100 rounded-full transition-colors print:hidden" title="Повернутися до магазину">
+                <i data-lucide="chevron-left" class="w-5 h-5 text-gray-700"></i>
+            </a>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-3">
+                    <i data-lucide="bar-chart-3" class="w-8 h-8 text-blue-600"></i> 
+                    Звіт «Продажі за період»
+                </h1>
+                <p class="text-sm text-gray-500 mt-1">Панель Менеджера (Аналітика даних СУБД)</p>
+            </div>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-end sm:items-center gap-4 print:hidden">
+            <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Період З</label>
+                    <div class="relative">
+                        <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input type="date" id="dateFrom" value="2026-01-01" class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none transition-all text-gray-700">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 uppercase tracking-wider mb-1">Період По</label>
+                    <div class="relative">
+                        <i data-lucide="calendar" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                        <input type="date" id="dateTo" value="2026-12-31" class="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none transition-all text-gray-700">
+                    </div>
+                </div>
+            </div>
+            <button onclick="handleGenerateReport()" id="generateBtn" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                <i data-lucide="filter" class="w-5 h-5"></i>
+                <span id="btnText">Сформувати звіт</span>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center">
+                <h2 class="text-lg font-bold text-gray-900 mb-6 text-center">Продажі за категоріями</h2>
+                <div class="w-full max-w-[240px] aspect-square flex items-center justify-center">
+                    <canvas id="salesPieChart"></canvas>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h2 class="text-lg font-bold text-gray-900">Деталізація продажів з БД</h2>
+                    
+                    <div class="flex gap-2 print:hidden">
+                        <button onclick="window.print()" class="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors border border-gray-200 cursor-pointer" title="Друк звіту">
+                            <i data-lucide="printer" class="w-5 h-5"></i>
+                        </button>
+                        <button onclick="handleExportPDF()" class="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 font-medium rounded-lg border border-gray-200 transition-colors cursor-pointer">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                            <span>Експортувати в PDF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse min-w-[600px]">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">Назва товару</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">Категорія</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200 text-right">Продано одиниць</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200 text-right">Загальна виручка</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTableBody" class="divide-y divide-gray-100">
+                            </tbody>
+                        <tfoot class="bg-blue-50/50 font-bold text-gray-900">
+                            <tr>
+                                <td colspan="2" class="py-4 px-6 text-right">Усього:</td>
+                                <td id="totalSoldCell" class="py-4 px-6 text-right">0 шт.</td>
+                                <td id="totalRevenueCell" class="py-4 px-6 text-right text-blue-700 text-lg font-black">0 ₴</td>
+                            </tr>
+                        </footer>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/sales-report.js"></script>
+</body>
+</html>

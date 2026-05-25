@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель менеджера | MusicStore</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+    <div id="header-placeholder"></div>
+
+    <div class="max-w-3xl mx-auto px-4 py-8">
+        
+        <nav class="flex text-sm text-gray-500 mb-6" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li>
+                    <a href="catalog.html" class="hover:text-blue-600 transition-colors flex items-center gap-1.5 font-medium">
+                        <i data-lucide="store" class="w-4 h-4"></i> Магазин
+                    </a>
+                </li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li>
+                    <a href="admin-dashboard.html" class="hover:text-blue-600 transition-colors flex items-center gap-1.5 font-medium">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Панель
+                    </a>
+                </li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li id="breadcrumbActive" class="text-gray-900 font-semibold flex items-center gap-1.5">
+                    <i data-lucide="plus-circle" class="w-4 h-4 text-blue-600"></i> Додавання інструменту
+                </li>
+            </ol>
+        </nav>
+
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8">
+            <div class="flex items-center gap-3 mb-6 border-b pb-4">
+                <div id="pageIconBox" class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                    <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 id="mainFormTitle" class="text-2xl font-bold text-gray-900">Додавання нового інструменту</h1>
+                    <p id="mainFormSubtitle" class="text-sm text-gray-500">Заповніть загальні та специфічні характеристики (Ієрархія ISA)</p>
+                </div>
+            </div>
+
+            <form id="addProductForm" class="space-y-6">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Назва моделі *</label>
+                        <input type="text" id="productName" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Виробник (Бренд) *</label>
+                        <input type="text" id="manufacturer" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ціна (₴) *</label>
+                        <input type="number" id="price" step="0.01" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Кількість на складі *</label>
+                        <input type="number" id="quantity" required class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Стан (ENUM) *</label>
+                        <select id="condition" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm">
+                            <option value="New">Новий (New)</option>
+                            <option value="Used">Вживаний (Used)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Опис інструменту</label>
+                    <textarea id="description" rows="3" class="w-full px-4 py-2 bg-gray-50 border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"></textarea>
+                </div>
+
+                <div class="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                    <label class="block text-sm font-bold text-blue-900 mb-2">Категорія інструменту (Таблиця-наслідник) *</label>
+                    <select id="categorySelect" required class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm">
+                        <option value="">-- Оберіть тип для підключення специфічних полів --</option>
+                        <option value="guitars">Гітари (Guitars)</option>
+                        <option value="keyboards">Клавішні (Keyboards)</option>
+                        <option value="drums">Ударні (Drums)</option>
+                        <option value="winds">Духові (Winds)</option>
+                    </select>
+                </div>
+
+                <div id="fields-guitars" class="isa-fields hidden p-5 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+                    <h3 class="text-base font-bold text-gray-900 flex items-center gap-2"><i data-lucide="music" class="w-4 h-4 text-blue-600"></i> Специфікація гітари</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" id="guitarType" placeholder="Тип (Електро, Акустична, Бас)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="text" id="guitarBody" placeholder="Матеріал корпусу (Дека)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="text" id="guitarNeck" placeholder="Матеріал грифа" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="number" id="guitarFrets" placeholder="Кількість ладів" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="number" id="guitarStrings" placeholder="Кількість струн" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="text" id="guitarPickups" placeholder="Тип звукознімачів (HSS, HH, SSS)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                    </div>
+                </div>
+
+                <div id="fields-keyboards" class="isa-fields hidden p-5 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+                    <h3 class="text-base font-bold text-gray-900 flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-blue-600"></i> Специфікація клавішних</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" id="keyboardType" placeholder="Тип (Синтезатор, Цифрове піаніно)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="number" id="keyboardKeys" placeholder="Кількість клавіш (напр. 88)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="number" id="keyboardPolyphony" placeholder="Поліфонія (кількість голосів)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <label class="flex items-center gap-3 px-4 py-2 bg-white border border-gray-300 rounded-xl cursor-pointer select-none">
+                            <input type="checkbox" id="keyboardSensitivity" class="w-4 h-4 text-blue-600 rounded border-gray-300">
+                            <span class="text-sm text-gray-700">Чутливість клавіш до натискання</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="fields-drums" class="isa-fields hidden p-5 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+                    <h3 class="text-base font-bold text-gray-900 flex items-center gap-2"><i data-lucide="circle-dot" class="w-4 h-4 text-blue-600"></i> Специфікація ударних</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" id="drumType" placeholder="Тип (Електронна, Акустична установка)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="text" id="drumConfiguration" placeholder="Конфігурація (напр. 3 томи, 2 тарілки)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="text" id="drumBodyMaterial" placeholder="Матеріал корпусу (Липа, Клен)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                    </div>
+                </div>
+
+                <div id="fields-winds" class="isa-fields hidden p-5 bg-gray-50 rounded-xl border border-gray-200 space-y-4">
+                    <h3 class="text-base font-bold text-gray-900 flex items-center gap-2"><i data-lucide="wind" class="w-4 h-4 text-blue-600"></i> Специфікація духових</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <input type="text" id="windType" placeholder="Тип (Саксофон, Флейта, Труба)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="text" id="windMaterial" placeholder="Матеріал покриття (Латунь, Срібло)" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                        <input type="text" id="windScaleRange" placeholder="Діапазон октав" class="w-full px-4 py-2 bg-white border border-gray-300 rounded-xl outline-none text-sm">
+                    </div>
+                </div>
+
+                <button type="submit" id="saveProductBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 px-6 rounded-xl transition-all shadow-sm shadow-blue-600/20 active:scale-[0.99] flex items-center justify-center gap-2 cursor-pointer">
+                    <i data-lucide="save" class="w-5 h-5"></i> <span id="saveBtnText">Зберегти інструмент у базу даних</span>
+                </button>
+
+            </form>
+        </div>
+    </div>
+
+    <script src="js/header.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/admin-add-product.js"></script>
+</body>
+</html>

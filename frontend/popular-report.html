@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рейтинг популярності товарів | MusicStore</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+    <div id="header-placeholder"></div>
+
+    <div class="max-w-5xl mx-auto px-4 py-8 space-y-6">
+        
+        <nav class="flex text-sm text-gray-500 mb-2" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li><a href="index.html" class="hover:text-blue-600 transition-colors flex items-center gap-1"><i data-lucide="store" class="w-3.5 h-3.5"></i> Магазин</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li><a href="admin-dashboard.html" class="hover:text-blue-600 transition-colors flex items-center gap-1"><i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i> Панель</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li class="text-gray-900 font-semibold flex items-center gap-1"><i data-lucide="trending-up" class="w-3.5 h-3.5 text-indigo-600"></i> Аналіз популярності товарів</li>
+            </ol>
+        </nav>
+
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 flex items-center gap-2">
+                <i data-lucide="award" class="w-8 h-8 text-indigo-600"></i> Звіт «Найпопулярніші товари»
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">Аналіз куплених одиниць інструментів та отриманого виторгу на основі чеків БД</p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-end gap-4 print:hidden">
+            <div class="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">З дати</label>
+                    <input type="date" id="popDateFrom" value="2026-01-01" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-semibold text-gray-700">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">По дату</label>
+                    <input type="date" id="popDateTo" value="2026-12-31" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-lg outline-none text-sm font-semibold text-gray-700">
+                </div>
+            </div>
+            <button onclick="generatePopularReport()" class="w-full sm:w-auto px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2 cursor-pointer text-sm shadow-sm shadow-indigo-600/10">
+                <i data-lucide="filter" class="w-4 h-4"></i> Сформувати рейтинг
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 min-h-[350px]">
+                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 text-center">Діаграма обсягів (штук)</h3>
+                <div class="w-full h-[260px] flex items-center justify-center">
+                    <canvas id="popularProductsChart"></canvas>
+                </div>
+            </div>
+
+            <div class="md:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col">
+                <div class="p-5 border-b border-gray-100 font-bold text-gray-900 text-sm sm:text-base bg-gray-50/50 flex items-center justify-between">
+                    <span><i data-lucide="list-ordered" class="w-4 h-4 text-gray-400 inline mr-1"></i> Рейтингова таблиця асортименту</span>
+                    <span class="text-xs text-gray-400">Сортування: за спаданням попиту</span>
+                </div>
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200 text-center">Місце</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Назва інструменту</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200">Категорія</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200 text-right">Куплено</th>
+                                <th class="py-3 px-6 text-xs font-bold text-gray-500 uppercase border-b border-gray-200 text-right">Сумарна виручка</th>
+                            </tr>
+                        </thead>
+                        <tbody id="popularTableBody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/header.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/popular-report.js"></script>
+</body>
+</html>

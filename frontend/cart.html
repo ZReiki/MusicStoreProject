@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ваш кошик | MusicStore</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans">
+
+    <div id="header-placeholder"></div>
+
+    <div class="py-8 max-w-6xl mx-auto px-4">
+        
+        <div class="mb-8 flex items-center gap-4">
+            <button onclick="window.history.back()" class="p-2 hover:bg-gray-200 bg-gray-100 rounded-full transition-colors cursor-pointer" title="Повернутися назад">
+                <i data-lucide="arrow-left" class="w-5 h-5 text-gray-700"></i>
+            </button>
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold">Кошик</h1>
+                <p id="cartCountHeader" class="text-sm text-gray-500 mt-1">0 товарів</p>
+            </div>
+        </div>
+
+        <div id="emptyCartState" class="hidden py-20 flex flex-col items-center justify-center text-center max-w-lg mx-auto">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
+                <i data-lucide="shopping-bag" class="w-12 h-12 text-gray-400"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-gray-900 mb-4">Ваш кошик порожній</h2>
+            <p class="text-gray-500 mb-8 text-lg">Ви ще не додали жодного інструменту. Перейдіть до каталогу, щоб знайти найкращий інструмент для вас!</p>
+            <a href="catalog.html" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3.5 rounded-xl font-bold text-lg transition-colors inline-flex items-center gap-2 shadow-sm">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i> Повернутися до каталогу
+            </a>
+        </div>
+
+        <div id="mainCartContent" class="flex flex-col lg:flex-row gap-8">
+            
+            <div class="lg:w-2/3 space-y-4">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    
+                    <div class="hidden sm:grid grid-cols-12 gap-4 p-4 border-b border-gray-100 bg-gray-50/50 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <div class="col-span-6">Товар</div>
+                        <div class="col-span-3 text-center">Кількість</div>
+                        <div class="col-span-2 text-right">Сума</div>
+                        <div class="col-span-1 text-center"></div>
+                    </div>
+
+                    <ul id="cartItemsList" class="divide-y divide-gray-100">
+                        </ul>
+                </div>
+
+                <div class="flex justify-end">
+                    <button onclick="clearCart()" class="text-red-500 font-medium text-sm hover:underline hover:text-red-600 flex items-center gap-2 px-4 py-2 cursor-pointer">
+                        <i data-lucide="trash2" class="w-4 h-4"></i> Очистити кошик
+                    </button>
+                </div>
+            </div>
+
+            <div class="lg:w-1/3">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 sticky top-24">
+                    <h2 class="text-xl font-bold text-gray-900 mb-6">Ваше замовлення</h2>
+                    
+                    <div class="space-y-4 mb-6">
+                        <div class="flex justify-between text-gray-600">
+                            <span id="summaryCountLabel">Товари (0)</span>
+                            <span id="summaryItemsTotal" class="font-medium">0 ₴</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600">
+                            <span>Знижка</span>
+                            <span class="font-medium text-green-600">0 ₴</span>
+                        </div>
+                        <div class="flex justify-between text-gray-600 border-b border-gray-100 pb-6">
+                            <span>Доставка</span>
+                            <span class="font-medium">За тарифами перевізника</span>
+                        </div>
+                        <div class="flex justify-between items-center pt-2">
+                            <span class="text-lg font-bold text-gray-900">Разом</span>
+                            <span id="cartTotalSum" class="text-2xl font-black text-blue-600">0 ₴</span>
+                        </div>
+                    </div>
+
+                    <button onclick="handleCheckout()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold text-lg transition-all flex justify-center items-center gap-2 shadow-sm shadow-blue-600/30 mb-4 cursor-pointer">
+                        Оформити замовлення <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+
+                    <div class="text-xs text-center text-gray-400 space-y-1">
+                        <p>Натискаючи кнопку, ви погоджуєтесь з умовами обробки даних.</p>
+                        <p>Оплата при отриманні.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/header.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/cart.js"></script>
+</body>
+</html>

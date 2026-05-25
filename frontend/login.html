@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Авторизація | MusicStore</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen flex flex-col">
+
+    <div id="header-placeholder"></div>
+
+    <div class="py-12 flex-1 flex justify-center items-center px-4">
+        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 w-full max-w-md">
+            
+            <div class="flex border-b border-gray-100 mb-6 bg-gray-50 p-1.5 rounded-xl">
+                <button id="tab-login" onclick="toggleFormMode('login')" class="flex-1 py-2.5 font-bold text-sm text-center rounded-lg bg-white text-blue-600 shadow-sm transition-all cursor-pointer">
+                    Вхід
+                </button>
+                <button id="tab-register" onclick="toggleFormMode('register')" class="flex-1 py-2.5 font-semibold text-sm text-center rounded-lg text-gray-500 hover:text-gray-900 transition-all cursor-pointer">
+                    Реєстрація
+                </button>
+            </div>
+
+            <div class="text-center mb-6">
+                <div id="form-icon-container" class="w-14 h-14 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i id="form-icon" data-lucide="lock" class="w-7 h-7"></i>
+                </div>
+                <h1 id="form-title" class="text-2xl font-bold text-gray-900">Вхід у систему</h1>
+                <p id="form-subtitle" class="text-sm text-gray-500 mt-1">Введіть ваші облікові дані</p>
+            </div>
+
+            <form id="globalAuthForm" class="space-y-4">
+                
+                <div id="register-fields" class="hidden space-y-4">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Ім'я</label>
+                            <input type="text" id="regFirstName" placeholder="Олександр" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Прізвище</label>
+                            <input type="text" id="regLastName" placeholder="Федосюк" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Телефон</label>
+                        <input type="tel" id="regPhone" placeholder="+380XXXXXXXXX" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Email</label>
+                    <input type="email" id="authEmail" required placeholder="name@musicstore.ua" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Пароль</label>
+                    <input type="password" id="authPassword" required placeholder="••••••••" class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all text-sm">
+                </div>
+
+                <div id="login-options" class="flex items-center justify-between pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" class="rounded text-blue-600 focus:ring-blue-500 border-gray-300 w-4 h-4">
+                        <span class="text-xs text-gray-600">Запам'ятати мене</span>
+                    </label>
+                    <a href="#" onclick="if(typeof showToast === 'function') showToast('Функція відновлення в розробці', 'info')" class="text-xs text-blue-600 hover:underline font-medium">Забули пароль?</a>
+                </div>
+
+                <button type="submit" id="globalAuthBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition-all shadow-sm shadow-blue-600/20 active:scale-[0.99] flex justify-center items-center gap-2 mt-4 cursor-pointer">
+                    Увійти
+                </button>
+            </form>
+            
+            <div class="mt-6 p-4 bg-yellow-50 border border-yellow-100 rounded-xl text-xs text-yellow-800 space-y-1">
+                <div class="font-bold mb-1">Тестові доступи (Системні ролі):</div>
+                <p>🔑 <strong>Адмін:</strong> admin@musicstore.ua</p>
+                <p>💼 <strong>Менеджер:</strong> manager@musicstore.ua</p>
+                <p>👤 <strong>Клієнт:</strong> будь-яка інша пошта</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/header.js"></script>
+    <script src="js/toast.js"></script>
+    <script src="js/login.js"></script> <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>

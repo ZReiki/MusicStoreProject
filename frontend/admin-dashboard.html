@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Панель управління | MusicStore Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+    <div id="header-placeholder"></div>
+
+    <div class="max-w-6xl mx-auto px-4 pt-8 pb-2">
+        <a href="catalog.html" class="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Повернутися до магазину
+        </a>
+    </div>
+
+    <div id="adminDashboardView" class="max-w-6xl mx-auto px-4 py-6 space-y-8 hidden">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100 gap-4 border-l-4 border-l-blue-600">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center shadow-md shadow-blue-600/20">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Панель адміністратора</h1>
+                    <p id="adminWelcomeText" class="text-sm text-gray-500">Вітаємо! | Посада: Старший менеджер</p>
+                </div>
+            </div>
+            
+            <div class="flex gap-3 w-full sm:w-auto">
+                <a href="catalog.html" class="flex-1 sm:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">
+                    <i data-lucide="eye" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Сайт</span>
+                </a>
+                <button id="adminLogoutBtn" class="flex-1 sm:flex-none justify-center inline-flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 font-medium rounded-xl transition-colors cursor-pointer">
+                    <i data-lucide="log-out" class="w-4 h-4"></i>
+                    Вийти
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Товарів у базі (Узагальнені дані)</p>
+                    <p id="statTotalProducts" class="text-2xl font-black text-gray-900 mt-1">Завантаження...</p>
+                </div>
+                <div class="p-3 bg-blue-50 text-blue-600 rounded-xl"><i data-lucide="package" class="w-6 h-6"></i></div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Замовлень сьогодні (Узагальнені дані)</p>
+                    <p id="statOrdersToday" class="text-2xl font-black text-gray-900 mt-1">Завантаження...</p>
+                </div>
+                <div class="p-3 bg-amber-50 text-amber-600 rounded-xl"><i data-lucide="shopping-bag" class="w-6 h-6"></i></div>
+            </div>
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Виручка за місяць (Узагальнені дані)</p>
+                    <p id="statMonthlyRevenue" class="text-2xl font-black text-green-600 mt-1">Завантаження...</p>
+                </div>
+                <div class="p-3 bg-green-50 text-green-600 rounded-xl"><i data-lucide="dollar-sign" class="w-6 h-6"></i></div>
+            </div>
+        </div>
+
+        <div>
+            <h2 class="text-xl font-bold text-gray-900 mb-6">Доступні модулі управління системи</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <a href="admin-add-product.html" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-blue-500 hover:shadow-md transition-all duration-300 flex items-start gap-4 group">
+                    <div class="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <i data-lucide="plus-circle" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1 flex-1">
+                        <h3 class="font-bold text-lg text-gray-900 group-hover:text-blue-600 transition-colors flex items-center justify-between">
+                            Додавання нових товарів (ISA)
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform"></i>
+                        </h3>
+                        <p class="text-sm text-gray-500">Внесення музичних інструментів у загальну таблицю `products` та спеціалізовані таблиці-наслідники (`guitars`, `keyboards`, `drums`, `winds`).</p>
+                    </div>
+                </a>
+
+                <a href="sales-report.html" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-purple-500 hover:shadow-md transition-all duration-300 flex items-start gap-4 group">
+                    <div class="p-3 bg-purple-50 text-purple-600 rounded-xl group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                        <i data-lucide="bar-chart-3" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1 flex-1">
+                        <h3 class="font-bold text-lg text-gray-900 group-hover:text-purple-600 transition-colors flex items-center justify-between">
+                            Запит «Прибуток за період»
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform"></i>
+                        </h3>
+                        <p class="text-sm text-gray-500">Генерація фінансових звітів. Візуалізація виторгу магазину на основі агрегатних функцій СУБД MySQL та фільтрації дат.</p>
+                    </div>
+                </a>
+
+                <a href="category-report.html" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition-all duration-300 flex items-start gap-4 group">
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <i data-lucide="pie-chart" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1 flex-1">
+                        <h3 class="font-bold text-lg text-gray-900 group-hover:text-emerald-600 transition-colors flex items-center justify-between">
+                            Звіт «Продажі за категоріями інструментів»
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform"></i>
+                        </h3>
+                        <p class="text-sm text-gray-500">Автоматичне групування продажів за поточний місяць. Розрахунок кількості куплених одиниць та загального виторгу.</p>
+                    </div>
+                </a>
+
+                <a href="popular-report.html" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-indigo-500 hover:shadow-md transition-all duration-300 flex items-start gap-4 group">
+                    <div class="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <i data-lucide="trending-up" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1 flex-1">
+                        <h3 class="font-bold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors flex items-center justify-between">
+                            Запит «Найпопулярніші товари»
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform"></i>
+                        </h3>
+                        <p class="text-sm text-gray-500">Рейтинговий аналіз куплених інструментів за обраний проміжок часу. Рендеринг лідерів продажів на основі позицій чеків `order_items`.</p>
+                    </div>
+                </a>
+
+                <a href="stock-report.html" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-orange-500 hover:shadow-md transition-all duration-300 flex items-start gap-4 group">
+                    <div class="p-3 bg-orange-50 text-orange-600 rounded-xl group-hover:bg-orange-600 group-hover:text-white transition-colors">
+                        <i data-lucide="package-search" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1 flex-1">
+                        <h3 class="font-bold text-lg text-gray-900 group-hover:text-orange-600 transition-colors flex items-center justify-between">
+                            Запит «Залишки товарів на складі»
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform"></i>
+                        </h3>
+                        <p class="text-sm text-gray-500">Автоматичний аудит залишків у таблиці `products`. Виведення інструментів, запаси яких досягли встановленого критичного мінімуму.</p>
+                    </div>
+                </a>
+
+                <a href="customer-report.html" class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-emerald-500 hover:shadow-md transition-all duration-300 flex items-start gap-4 group">
+                    <div class="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-600 group-hover:text-white transition-colors">
+                        <i data-lucide="users" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1 flex-1">
+                        <h3 class="font-bold text-lg text-gray-900 group-hover:text-emerald-600 transition-colors flex items-center justify-between">
+                            Запит «Активність клієнтів»
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-gray-400 group-hover:translate-x-1 transition-transform"></i>
+                        </h3>
+                        <p class="text-sm text-gray-500">Маркетинговий аналіз клієнтської бази СУБД. Підрахунок кількості унікальних чеків покупців, сум фінансових витрат та автоматична VIP-класифікація.</p>
+                    </div>
+                </a>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 opacity-60 flex items-start gap-4">
+                    <div class="p-3 bg-gray-100 text-gray-500 rounded-xl">
+                        <i data-lucide="percent" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="font-bold text-lg text-gray-400">Додавання акцій або знижок (В розробці)</h3>
+                        <p class="text-sm text-gray-400">Реєстрація маркетингових кампаній, автоматичний перерахунок відображуваної вартості для обраних категорій.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 opacity-60 flex items-start gap-4">
+                    <div class="p-3 bg-gray-100 text-gray-500 rounded-xl">
+                        <i data-lucide="clipboard-list" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="font-bold text-lg text-gray-400">Менеджмент замовлень (В розробці)</h3>
+                        <p class="text-sm text-gray-400">Перегляд повної таблиці `orders`, зміна статусів доставки та перевірка посилальної цілісності.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 opacity-60 flex items-start gap-4" class="md:col-span-2">
+                    <div class="p-3 bg-gray-100 text-gray-500 rounded-xl">
+                        <i data-lucide="refresh-ccw" class="w-6 h-6"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="font-bold text-lg text-gray-400">Обробка повернень товарів (В розробці)</h3>
+                        <p class="text-sm text-gray-400">Реєстрація заявок у таблиці `returns`, верифікація причин браку та зміна логістичних статусів.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/header.js"></script>
+    <script src="js/admin-dashboard.js"></script>
+</body>
+</html>
