@@ -1,15 +1,15 @@
 let productFromDB = [];
 
-// Стан фільтрів
+// Фільтри та стан каталогу
 let searchQuery = "";
 let selectedCategories = [];
 let selectedBrands = [];
 let selectedCondition = "Всі";
 let minPrice = 0;
 let maxPrice = 50000;
-let selectedSpecs = {}; // Об'єкт для зберігання додаткових фільтрів характеристик, напр: { numberOfStrings: ["6", "7"] }
+let selectedSpecs = {};
 
-// Посилання на елементи HTML
+// DOM елементи
 const productGrid = document.getElementById("productGrid");
 const productCount = document.getElementById("productCount");
 const emptyState = document.getElementById("emptyState");
@@ -19,53 +19,63 @@ const priceRangeInput = document.getElementById("priceRange");
 const dynamicSpecsContainer = document.getElementById("dynamicSpecificationsContainer");
 const specificationsFields = document.getElementById("specificationsFields");
 
-async function fetchProducts(){
+/**
+ * Завантажує товари з API, обчислює динамічні межі цін 
+ * та ініціалізує UI компонентів фільтрації.
+ */
+async function fetchProducts() {
     try {
         const response = await fetch('http://localhost:8080/api/products');
-        if(!response.ok){
+
+        if (!response.ok) {
             throw new Error(`HTTP помилка: ${response.status}`);
         }
 
         productFromDB = await response.json();
 
-        // Автоматично виставляємо максимальний повзунок ціни на основі БД
+        // Динамічне вирахування максимальної ціни на основі отриманих даних
         if (productFromDB.length > 0) {
             const maxPriceInDB = Math.max(...productFromDB.map(p => p.price));
+
             maxPrice = maxPriceInDB > 0 ? maxPriceInDB : 50000;
+
             priceMaxInput.value = maxPrice;
             priceRangeInput.max = maxPrice;
             priceRangeInput.value = maxPrice;
         }
 
-        // Ініціалізація статичних фільтрів та ДИНАМІЧНОГО фільтра брендів
         initStaticFiltersUI();
         updateBrandFilterUI();
-
         renderProducts(productFromDB);
-    } catch (error){
+
+    } catch (error) {
         console.error("Помилка заватнаження товарів з бази даних:", error);
+
         document.getElementById("productGrid").innerHTML = `
             <div class="col-span-full text-center py-10 text-red-500 font-medium">
                 Помилка з'єднання з сервером. Переконайтесь, що Java Backend запущено.
             </div>
         `;
+
         showToast("Помилка завантаження товарів з бази даних!", "error");
     }
 }
 
+// Константи конфігурації інтерфейсу
 const CATEGORY_MAP = {
     "Guitars": "Гітари",
     "Keyboards": "Клавішні",
     "Drums": "Ударні",
     "Winds": "Духові"
 };
-// Масив англійських назв категорій (як вони приходять з вашого Java-бекенду/БД)
 const CATEGORIES = ["Guitars", "Keyboards", "Drums", "Winds"];
 const CONDITIONS = ["Всі", "New", "Used"];
 
-// --- 2. ДИНАМІЧНЕ ОНОВЛЕННЯ БРЕНДІВ З БД ---
+/**
+ * Формує унікальний список брендів, які є в наявності серед товарів,
+ * та рендерить відповідні чекбокси.
+ */
 function updateBrandFilterUI() {
-    // Збираємо тільки ті бренди (manufacturer), які реально є в отриманих товарах
     const uniqueBrandsInDB = [...new Set(productFromDB.map(p => p.manufacturer).filter(Boolean))].sort();
     
     const container = document.getElementById("brandsContainer");
@@ -82,7 +92,10 @@ function updateBrandFilterUI() {
     `).join('');
 }
 
-// --- 3. ДИНАМІЧНА ГЕНЕРАЦІЯ ХАРАКТЕРИСТИК ЗА КАТЕГОРІЯМИ ---
+/**
+ * Генерує блоки фільтрів під специфічні характеристики категорії.
+ * Відображається лише тоді, коли обрано рівно одну категорію.
+ */
 function updateDynamicSpecificationsUI() {
     // Якщо обрано 0 або більше ніж 1 категорію одночасно — ховаємо додаткові специфікації
     if (selectedCategories.length !== 1) {
@@ -131,9 +144,9 @@ function updateDynamicSpecificationsUI() {
 
     let htmlResult = "";
 
-    // Проходимо по кожному налаштуванню поля та витягуємо унікальні значення з БД
+    // Генерація HTML для характеристик
     specFieldsConfig.forEach(field => {
-        // Збираємо значення, приводимо до String (наприклад для цілих чисел ладів/струн)
+        // Збираємо значення, приводимо до String
         const uniqueValues = [...new Set(categoryProducts.map(p => p[field.id]).filter(v => v !== undefined && v !== null && v !== ''))]
             .map(String)
             .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
@@ -178,7 +191,7 @@ function updateDynamicSpecificationsUI() {
     }
 }
 
-// --- 4. РЕНДЕР КАРТОК ТОВАРІВ І МАТРИЦЯ ФІЛЬТРАЦІЇ ---
+// --- РЕНДЕР КАРТОК ТОВАРІВ І МАТРИЦЯ ФІЛЬТРАЦІЇ ---
 function renderProducts(sourceArray = productFromDB) {
     const filtered = sourceArray.filter(product => {
         const pName = product.productName ? product.productName.toLowerCase() : "";
@@ -230,9 +243,32 @@ function renderProducts(sourceArray = productFromDB) {
         // Перевіряємо, чи зайшов під цим браузером адмін або менеджер
         const isAdmin = localStorage.getItem("adminAuthUser") !== null;
 
-        let buttonHTML = isInCart 
-            ? `<button onclick="event.stopPropagation(); window.location.href='cart.html'" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors outline-none cursor-pointer flex items-center gap-1"><i data-lucide="check" class="w-4 h-4"></i> В кошику</button>`
-            : `<button onclick="event.stopPropagation(); addToCartFromUI(${product.productId})" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors outline-none active:scale-95 cursor-pointer">До кошика</button>`;
+        let buttonHTML = '';
+    
+        // Перевірка на наявність
+        if (product.quantity <= 0) {
+            // Якщо товару 0, виводимо сіру заблоковану кнопку (disabled)
+            buttonHTML = `
+                <button disabled class="bg-gray-200 text-gray-400 px-4 py-2 rounded-lg font-medium text-sm transition-colors cursor-not-allowed flex items-center gap-1">
+                    <i data-lucide="package-x" class="w-4 h-4"></i> Закінчився
+                </button>
+            `;
+        } else {
+            // Якщо товар є — відпрацьовує стандартний вибір "До кошика" / "В кошику"
+            if (isInCart) {
+                buttonHTML = `
+                    <button onclick="event.stopPropagation(); window.location.href='cart.html'" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors outline-none cursor-pointer flex items-center gap-1">
+                        <i data-lucide="check" class="w-4 h-4"></i> В кошику
+                    </button>
+                `;
+            } else {
+                buttonHTML = `
+                    <button onclick="event.stopPropagation(); addToCartFromUI(${product.productId})" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors outline-none active:scale-95 cursor-pointer">
+                        До кошика
+                    </button>
+                `;
+            }
+        }
 
         let editButtonHTML = '';
         if (isAdmin) {
@@ -255,7 +291,9 @@ function renderProducts(sourceArray = productFromDB) {
         return `
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-lg transition-all duration-300 flex flex-col cursor-pointer group hover:-translate-y-1">
                 <div class="aspect-[4/3] bg-gray-50 relative overflow-hidden" onclick="window.location.href='product.html?id=${product.productId}'">
-                    <img src="${product.photo || 'https://via.placeholder.com/500'}" alt="${product.productName}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    <img src="${product.photo || 'img/no-photo.png'}" 
+                        alt="${product.productName}" 
+                        class="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 ${product.quantity <= 0 ? 'opacity-40 grayscale' : ''}">
                     <div class="absolute top-3 left-3">
                         <span class="px-2.5 py-1 bg-white/95 backdrop-blur-sm text-xs font-semibold text-gray-700 rounded-md border border-gray-100/50">${conditionBadge}</span>
                     </div>
@@ -281,7 +319,7 @@ function renderProducts(sourceArray = productFromDB) {
     lucide.createIcons();
 }
 
-// --- 5. ГЕНЕРАЦІЯ СТАТИЧНИХ ЕЛЕМЕНТІВ ---
+// --- ГЕНЕРАЦІЯ СТАТИЧНИХ ЕЛЕМЕНТІВ ---
 function initStaticFiltersUI() {
     document.getElementById("categoriesContainer").innerHTML = CATEGORIES.map(cat => `
         <label class="flex items-center gap-3 cursor-pointer group">
@@ -302,7 +340,7 @@ function initStaticFiltersUI() {
     }).join('');
 }
 
-// --- 6. НАЛАШТУВАННЯ СЛУХАЧІВ ПОДІЙ ---
+// --- НАЛАШТУВАННЯ СЛУХАЧІВ ПОДІЙ ---
 function setupEventListeners() {
     // Зміна категорії -> перераховуємо бренди та специфікації
     document.getElementById("categoriesContainer").addEventListener("change", () => {
@@ -400,7 +438,7 @@ function setupEventListeners() {
     });
 }
 
-// --- 7. ДОДАВАННЯ В КОШИК ---
+// --- ДОДАВАННЯ В КОШИК ---
 function addToCartFromUI(productId) {
     const productToAdd = productFromDB.find(p => p.productId === productId);
     if (!productToAdd) return;
@@ -418,7 +456,6 @@ function addToCartFromUI(productId) {
     if (typeof updateCartBadge === 'function') updateCartBadge();
     
     renderProducts();
-    // alert(`Інструмент "${productToAdd.productName}" додано до кошика!`);
     showToast(`Інструмент "${productToAdd.productName}" успішно додано до кошика!`, 'success');
 }
 

@@ -18,14 +18,6 @@ public class Product {
     protected double rating;
     protected String photo;
 
-    // Геттери (необхідні для виводу інформації)
-    public int getProductId() {return productId;}
-    public void setProductId(int productId) {this.productId = productId;}
-    public String getProductName() { return productName; }
-    public double getPrice() { return price; }
-    public String getCategory() { return category; }
-    public int getQuantity() { return quantity; }
-
     // Перевизначений метод для гарного виводу в консоль
     @Override
     public String toString() {

@@ -42,7 +42,7 @@ function toggleFormMode(mode) {
     } else {
         regFields.classList.add("hidden");
         loginOptions.classList.remove("hidden");
-        submitBtn.textContent = "Увійти"; // ВИПРАВЛЕНО БАГ 2: Явно форсуємо повернення тексту
+        submitBtn.textContent = "Увійти";
         formTitle.textContent = "Вхід у систему";
         formSubtitle.textContent = "Введіть ваші облікові дані";
         
@@ -65,7 +65,6 @@ document.getElementById("globalAuthForm").addEventListener("submit", async funct
     const password = document.getElementById("authPassword").value;
     const btn = document.getElementById("globalAuthBtn");
     
-    // ВИПРАВЛЕНО БАГ 4: Перевірка домену на фронтенді (захист від хитрої реєстрації клієнта)
     if (currentMode === 'register' && email.endsWith("@musicstore.ua")) {
         if (typeof showToast === 'function') {
             showToast("Реєстрація клієнтів на домен @musicstore.ua заблокована!", "error");
@@ -143,7 +142,6 @@ document.getElementById("globalAuthForm").addEventListener("submit", async funct
                 toggleFormMode('login');
                 document.getElementById("authEmail").value = email;
             } else {
-                // ОНОВЛЕНО: Якщо сервер повернув статус "error" (наприклад, Email already exists)
                 if (typeof showToast === 'function') {
                     if (data.message === "Email already exists") {
                         showToast(`Користувач з email ${email} вже зареєстрований у системі!`, "error", 5000);

@@ -82,7 +82,6 @@ function renderBarChart(data) {
         categoryChartInstance.destroy();
     }
 
-    // ВИПРАВЛЕНО БАГ: Видалено сторонній tbody.innerHTML, який ламав скрипт
     if (!data || data.length === 0) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         return;

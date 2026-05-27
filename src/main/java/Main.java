@@ -27,6 +27,8 @@ public class Main {
             server.createContext("/api/admin/customer-activity-report", new CustomerActivityReportHandler());
             server.createContext("/api/user/orders", new CustomerOrdersHandler());
             server.createContext("/api/user/checkout", new CartCheckoutHandler());
+            server.createContext("/api/admin/daily-movement-report", new DailyProductMovementReportHandler());
+            server.createContext("/api/admin/financial-report", new FinancialReportHandler());
             server.setExecutor(null);
             server.start();
         } catch (IOException e) {
@@ -43,14 +45,14 @@ public class Main {
         exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
 
         if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-            // Отримуємо повний URI запиту, наприклад: /api/products?id=3 або /api/products?category=Guitars
+            // Отримуємо повний URI запиту
             URI requestURI = exchange.getRequestURI();
             String query = requestURI.getQuery(); // Отримаємо чистий рядок параметрів: "id=3"
             
             String jsonResponse = "";
 
             if (query != null) {
-                // Розбираємо параметри (дуже проста логіка для швидкості)
+                // Розбираємо параметри
                 if (query.startsWith("id=")) {
                     try {
                         int id = Integer.parseInt(query.substring(3)); // Вирізаємо цифру після "id="
@@ -113,7 +115,6 @@ public class Main {
 
                 String jsonResponse = controller.handleLogin(email);
 
-                // ВИПРАВЛЕНО БАГ 3: Логування в консоль сервера
                 System.out.println("\n[POST] Запит на авторизацію користувача:");
                 System.out.println("-> Спроба входу з Email/Login: " + email);
                 if (jsonResponse.contains("success")) {
@@ -160,7 +161,6 @@ public class Main {
                 String rawBody = sb.toString();
                 String jsonResponse = controller.handleRegister(rawBody);
 
-                // ВИПРАВЛЕНО БАГ 3: Логування реєстрації клієнтів
                 System.out.println("\n[POST] Запит на створення нового акаунту (Реєстрація):");
                 System.out.println("-> Отримано JSON: " + rawBody);
                 if (jsonResponse.contains("success")) {
@@ -414,7 +414,6 @@ public class Main {
                 URI requestURI = exchange.getRequestURI();
                 String query = requestURI.getQuery();
                 
-                // Дефолтні значення поточного згідно курсової моменту
                 int month = 5; 
                 int year = 2026;
 
@@ -539,6 +538,7 @@ public class Main {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
+            // Встановлюємо CORS та тип контенту через офіційну мапу Headers
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
             exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
@@ -550,8 +550,25 @@ public class Main {
             }
 
             if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
-                String jsonResponse = controller.getCustomerActivityReportAsJson();
-                System.out.println("[GET] Формування аналітичного звіту «Активність клієнтів»");
+                URI requestURI = exchange.getRequestURI();
+                String query = requestURI.getQuery();
+                
+                String fromDate = "2026-01-01";
+                String toDate = "2026-12-31";
+
+                if (query != null) {
+                    String[] params = query.split("&");
+                    for (String param : params) {
+                        String[] pair = param.split("=");
+                        if (pair.length == 2) {
+                            if (pair[0].equals("from")) fromDate = pair[1];
+                            if (pair[0].equals("to")) toDate = pair[1];
+                        }
+                    }
+                }
+
+                String jsonResponse = controller.getCustomerActivityReportAsJson(fromDate, toDate);
+                System.out.println("[GET] Формування періодичного CRM звіту активності покупців (" + fromDate + " -> " + toDate + ")");
 
                 byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, bytes.length);
@@ -634,6 +651,89 @@ public class Main {
                 String jsonResponse = controller.handleCartCheckout(sb.toString());
                 System.out.println("[POST] Запит на транзакційне оформлення чека з кошика клієнта");
 
+                byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
+                }
+            } else {
+                exchange.sendResponseHeaders(405, -1);
+            }
+        }
+    }
+
+    // ХЕНДЛЕР: GET /api/admin/daily-movement-report?date=2026-05-26
+    static class DailyProductMovementReportHandler implements HttpHandler {
+        private final Controller controller = new Controller();
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                URI requestURI = exchange.getRequestURI();
+                String query = requestURI.getQuery();
+                // String date = "2026-05-26";
+                String date = java.time.LocalDate.now().toString();
+
+                if (query != null && query.startsWith("date=")) {
+                    date = query.substring(5);
+                }
+
+                String jsonResponse = controller.getDailyProductMovementReportAsJson(date);
+                byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(bytes);
+                }
+            } else {
+                exchange.sendResponseHeaders(405, -1);
+            }
+        }
+    }
+
+    // ХЕНДЛЕР: GET /api/admin/financial-report?from=X&to=Y
+    static class FinancialReportHandler implements HttpHandler {
+        private final Controller controller = new Controller();
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, OPTIONS");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
+            exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
+
+            if ("OPTIONS".equalsIgnoreCase(exchange.getRequestMethod())) {
+                exchange.sendResponseHeaders(204, -1);
+                return;
+            }
+
+            if ("GET".equalsIgnoreCase(exchange.getRequestMethod())) {
+                URI requestURI = exchange.getRequestURI();
+                String query = requestURI.getQuery();
+                String from = "2026-01-01";
+                String to = "2026-12-31";
+
+                if (query != null) {
+                    String[] params = query.split("&");
+                    for (String param : params) {
+                        String[] pair = param.split("=");
+                        if (pair.length == 2) {
+                            if (pair[0].equals("from")) from = pair[1];
+                            if (pair[0].equals("to")) to = pair[1];
+                        }
+                    }
+                }
+
+                String jsonResponse = controller.getFinancialResultReportAsJson(from, to);
                 byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, bytes.length);
                 try (OutputStream os = exchange.getResponseBody()) {

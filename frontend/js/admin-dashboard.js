@@ -1,60 +1,80 @@
-// Посилання на елементи
+// Отримання посилань на основні елементи сторінки
 const adminDashboardView = document.getElementById("adminDashboardView");
 const adminLogoutBtn = document.getElementById("adminLogoutBtn");
 
-// Перевірка безпеки та первинне завантаження даних системи при старті сторінки
+// Ініціалізація адміністративної панелі після завантаження сторінки
 document.addEventListener("DOMContentLoaded", function() {
     const adminJson = localStorage.getItem("adminAuthUser");
     
+    // Перевірка наявності авторизованого користувача
     if (!adminJson) {
-        // Якщо співробітник не авторизований - примусово відправляємо на сторінку входу
         window.location.href = "login.html";
         return;
     }
 
-    // Якщо авторизований - заповнюємо персональні дані і показуємо панель
+    // Отримання даних адміністратора з localStorage
     const admin = JSON.parse(adminJson);
+
+    // Відображення панелі адміністратора
     adminDashboardView.classList.remove("hidden");
     
-    // Динамічно підставляємо ПІБ та посаду (Admin/Manager) з активної сесії
-    const localizedRole = admin.role === "Admin" ? "Адміністратор системи" : "Старший менеджер";
-    document.getElementById("adminWelcomeText").textContent = `Вітаємо, ${admin.name} | Посада: ${localizedRole}`;
+    // Формування локалізованої назви ролі користувача
+    const localizedRole = admin.role === "Admin"
+        ? "Адміністратор системи"
+        : "Старший менеджер";
 
-    // Завантажуємо динамічні лічильники агрегацій з СУБД
+    // Відображення інформації про користувача
+    document.getElementById("adminWelcomeText").textContent =
+        `Вітаємо, ${admin.name} | Посада: ${localizedRole}`;
+
+    // Завантаження статистики для дашборду
     fetchDashboardCounters();
 
-    // Ініціалізуємо іконки Lucide
+    // Ініціалізація іконок Lucide
     if (typeof lucide !== 'undefined') {
         lucide.createIcons();
     }
 });
 
-// Функція запиту агрегованих лічильників з Java бекенду
+// Отримання статистичних даних для панелі адміністратора
 async function fetchDashboardCounters() {
     try {
-        // Викликаємо сервер, передаючи поточні дати за замовчуванням (для лічильників верхньої панелі)
-        const response = await fetch('http://localhost:8080/api/admin/report?from=2026-01-01&to=2026-12-31');
-        if (!response.ok) throw new Error(`HTTP помилка: ${response.status}`);
+        // Запит даних з бекенду
+        const response = await fetch(
+            'http://localhost:8080/api/admin/report?from=2026-01-01&to=2026-12-31'
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP помилка: ${response.status}`);
+        }
         
         const data = await response.json();
 
-        // Оновлюємо текстовий контент елементів реальними даними з MySQL
-        document.getElementById("statTotalProducts").textContent = `${data.totalProductsInDB.toLocaleString('uk-UA')} шт.`;
-        document.getElementById("statOrdersToday").textContent = `${data.totalOrdersToday} заявок`;
-        document.getElementById("statMonthlyRevenue").textContent = `${data.monthlyRevenue.toLocaleString('uk-UA')} ₴`;
+        // Оновлення статистичних показників на сторінці
+        document.getElementById("statTotalProducts").textContent =
+            `${data.totalProductsInDB.toLocaleString('uk-UA')} шт.`;
+
+        document.getElementById("statOrdersToday").textContent =
+            `${data.totalOrdersToday} заявок`;
+
+        document.getElementById("statMonthlyRevenue").textContent =
+            `${data.monthlyRevenue.toLocaleString('uk-UA')} ₴`;
 
     } catch (error) {
         console.error("Помилка завантаження лічильників дашборду:", error);
         
-        // У разі помилки виставляємо нулі, щоб інтерфейс не зависав на стадії завантаження
+        // Встановлення значень за замовчуванням у разі помилки
         document.getElementById("statTotalProducts").textContent = "0 шт.";
         document.getElementById("statOrdersToday").textContent = "0 заявок";
         document.getElementById("statMonthlyRevenue").textContent = "0 ₴";
     }
 }
 
-// Обробка натискання кнопки "Вийти"
+// Обробка виходу користувача з системи
 adminLogoutBtn.addEventListener("click", function() {
+    // Видалення даних авторизації
     localStorage.removeItem("adminAuthUser");
+
+    // Перенаправлення на сторінку входу
     window.location.href = "login.html";
 });

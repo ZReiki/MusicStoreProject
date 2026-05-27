@@ -64,14 +64,13 @@ function showErrorState() {
         </div>`;
 }
 
-// Funkція первинного рендеру сторінки
+// Функція первинного рендеру сторінки
 function initProductDetails() {
     if (!product) return;
 
-    // Localized назва категорії
+    // Локалізація назви категорії
     const ukrCategory = CATEGORY_MAP[product.category] || product.category;
 
-    // 1. Хлібні крихти з урахуванням локалізації категорії
     document.getElementById("breadcrumbs").innerHTML = `
         <li><a href="catalog.html" class="hover:text-blue-600 transition-colors">Головна</a></li>
         <li><i data-lucide="chevron-right" class="w-4 h-4"></i></li>

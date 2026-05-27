@@ -14,13 +14,13 @@ public class Controller {
     private UserDAO userDAO = new UserDAO();
     private Gson gson = new Gson();
 
-    // Повертає весь каталог (як і було)
+    // Повертає весь список товарів у форматі JSON
     public String getProductAsJson(){
         List<Product> products = productDAO.getAllProducts();
         return gson.toJson(products);
     }
 
-    // НОВИЙ МЕТОД: Перетворює один знайдений товар в JSON рядок
+    // Повертає один товар за його ID у форматі JSON
     public String getProductByIdAsJson(int id) {
         Product product = productDAO.getProductById(id);
         if (product == null) {
@@ -29,13 +29,13 @@ public class Controller {
         return gson.toJson(product);
     }
 
-    // НОВИЙ МЕТОД: Перетворює відфільтровані категорії в JSON
+    // Повертає список товарів певної категорії у форматі JSON
     public String getProductsByCategoryAsJson(String category) {
         List<Product> products = productDAO.getProductsByCategory(category);
         return gson.toJson(products);
     }
 
-    // НОВИЙ МЕТОД: Вхід у систему (Перевірка ролей та пошук в БД)
+    // Обробляє вхід користувача в систему та визначає його роль
     public String handleLogin(String email) {
         // Перевіряємо, чи це співробітник системи (Адмін або Менеджер)
         if (email.endsWith("@musicstore.ua")) {
@@ -57,11 +57,11 @@ public class Controller {
         return "{\"status\":\"error\", \"message\":\"User not found\"}";
     }
 
+    // Реєструє нового клієнта та перевіряє коректність даних
     public String handleRegister(String jsonCustomer) {
         try {
             Customer newCustomer = gson.fromJson(jsonCustomer, Customer.class);
             
-            // ВИПРАВЛЕНО БАГ 4: Серверне блокування реєстрації на корпоративний домен
             if (newCustomer.getEmail() != null && newCustomer.getEmail().endsWith("@musicstore.ua")) {
                 return "{\"status\":\"error\", \"message\":\"Registration on this domain is forbidden for customers!\"}";
             }
@@ -80,7 +80,7 @@ public class Controller {
         return "{\"status\":\"error\", \"message\":\"Registration failed\"}";
     }
 
-    // НОВИЙ МЕТОД: Обробка запиту на оновлення профілю клієнта
+    // Оновлює дані профілю клієнта
     public String handleUpdateProfile(String jsonCustomer) {
         try {
             Customer updatedCustomer = gson.fromJson(jsonCustomer, Customer.class);
@@ -94,11 +94,13 @@ public class Controller {
         return "{\"status\":\"error\", \"message\":\"Update failed in database\"}";
     }
 
+    // Формує звіт про продажі за вказаний період у форматі JSON
     public String getSalesReportAsJson(String from, String to) {
         models.AdminReport report = productDAO.getSalesReport(from, to);
         return gson.toJson(report);
     }
 
+    // Додає новий товар разом зі специфічними характеристиками ISA
     public String addProductISA(String jsonRaw) {
         try {
             com.google.gson.JsonObject obj = gson.fromJson(jsonRaw, com.google.gson.JsonObject.class);
@@ -122,7 +124,7 @@ public class Controller {
                 for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : specs.entrySet()) {
                     com.google.gson.JsonElement el = entry.getValue();
                     
-                    // ВИПРАВЛЕНО: Перевіряємо, що елемент існує і не є JSON NULL
+                    // Перевіряємо, що елемент існує і не є JSON NULL
                     if (el != null && !el.isJsonNull()) {
                         if (el.isJsonPrimitive()) {
                             com.google.gson.JsonPrimitive primitive = el.getAsJsonPrimitive();
@@ -167,6 +169,7 @@ public class Controller {
         return "{\"status\":\"error\", \"message\":\"Transaction failed\"}";
     }
 
+    // Оновлює інформацію про товар та його специфічні характеристики ISA
     public String updateProductISA(String jsonRaw) {
         try {
             com.google.gson.JsonObject obj = gson.fromJson(jsonRaw, com.google.gson.JsonObject.class);
@@ -184,7 +187,6 @@ public class Controller {
             java.util.Map<String, Object> specMap = new java.util.HashMap<>();
             com.google.gson.JsonObject specs = obj.getAsJsonObject("specificData");
             
-            // Твоя логіка розбору Gson полів (яку ми виправляли минулого разу)
             if (specs != null) {
                 for (java.util.Map.Entry<String, com.google.gson.JsonElement> entry : specs.entrySet()) {
                     com.google.gson.JsonElement el = entry.getValue();
@@ -205,6 +207,7 @@ public class Controller {
         return "{\"status\":\"error\", \"message\":\"Update failed\"}";
     }
 
+    // Видаляє товар за його ID
     public String handleDeleteProduct(int id) {
         boolean isDeleted = productDAO.deleteProduct(id);
         if (isDeleted) {
@@ -213,30 +216,35 @@ public class Controller {
         return "{\"status\":\"error\", \"message\":\"Не вдалося видалити товар. Можливо, він міститься в активних замовленнях чеків.\"}";
     }
 
+    // Формує звіт по категоріях товарів за місяць у форматі JSON
     public String getCategoryMonthlyReportAsJson(int month, int year) {
         List<java.util.Map<String, Object>> report = productDAO.getCategoryMonthlyReport(month, year);
         return gson.toJson(report);
     }
 
+    // Формує звіт про товари з низьким залишком на складі
     public String getLowStockReportAsJson(int limit) {
         List<models.Product> report = productDAO.getLowStockReport(limit);
         return gson.toJson(report);
     }
 
+    // Формує звіт про популярні товари за вказаний період
     public String getPopularProductsReportAsJson(String from, String to) {
         List<java.util.Map<String, Object>> report = productDAO.getPopularProductsReport(from, to);
         return gson.toJson(report);
     }
 
-    public String getCustomerActivityReportAsJson() {
-        List<java.util.Map<String, Object>> report = productDAO.getCustomerActivityReport();
-        return gson.toJson(report);
+    // Формує звіт про активність клієнтів за вказаний період
+    public String getCustomerActivityReportAsJson(String from, String to) {
+        return gson.toJson(productDAO.getCustomerActivityReport(from, to));
     }
 
+    // Повертає список замовлень конкретного клієнта
     public String getCustomerOrdersAsJson(int customerId) {
         return gson.toJson(userDAO.getCustomerOrders(customerId));
     }
 
+    // Оформлює замовлення та виконує перевірку товарів на складі
     public String handleCartCheckout(String jsonRaw) {
         try {
             com.google.gson.JsonObject obj = gson.fromJson(jsonRaw, com.google.gson.JsonObject.class);
@@ -257,9 +265,22 @@ public class Controller {
 
             boolean success = userDAO.checkoutOrder(customerId, totalSum, itemsList);
             if (success) return "{\"status\":\"success\"}";
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
+            // Передаємо точну назву товару, якого не вистачило на складі
             return "{\"status\":\"error\", \"message\":\"" + e.getMessage() + "\"}";
+        } catch (Exception e) {
+            return "{\"status\":\"error\", \"message\":\"Помилка транзакції\"}";
         }
         return "{\"status\":\"error\", \"message\":\"Checkout transaction failed\"}";
+    }
+
+    // Формує звіт про рух товарів за конкретну дату
+    public String getDailyProductMovementReportAsJson(String date) {
+        return gson.toJson(productDAO.getDailyProductMovementReport(date));
+    }
+
+    // Формує фінансовий звіт за вказаний період
+    public String getFinancialResultReportAsJson(String from, String to) {
+        return gson.toJson(productDAO.getFinancialResultReport(from, to));
     }
 }

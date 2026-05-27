@@ -1,11 +1,9 @@
-// frontend/js/header.js
-
 function renderHeader() {
     // 1. Знаходимо місце для хедера на сторінці
     const headerPlaceholder = document.getElementById("header-placeholder");
     if (!headerPlaceholder) return;
 
-    // 2. Вставляємо HTML-код (твій код + я додав бейдж для кошика та посилання на нього)
+    // 2. Вставляємо HTML-код 
     headerPlaceholder.innerHTML = `
         <header class="bg-white border-b border-gray-200 sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
@@ -57,7 +55,7 @@ function updateCartBadge() {
     const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const badge = document.getElementById("headerCartBadge");
     
-    // Рахуємо загальну кількість одиниць (або просто кількість позицій: cart.length)
+    // Рахуємо загальну кількість одиниць
     const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
 
     if (totalItems > 0) {

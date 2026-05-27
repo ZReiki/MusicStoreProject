@@ -86,14 +86,14 @@ function renderHorizontalChart(data) {
             }]
         },
         options: {
-            indexAxis: 'y', // РОБИТЬ СТОВПЧИКИ ГОРИЗОНТАЛЬНИМИ!
+            indexAxis: 'y',
             responsive: true,
             maintainAspectRatio: false,
             scales: {
                 x: { beginAtZero: true, ticks: { stepSize: 1 } }
             },
             plugins: {
-                legend: { display: false } // Ховаємо легенду, бо у нас один тип даних
+                legend: { display: false }
             }
         }
     });

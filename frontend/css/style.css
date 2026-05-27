@@ -109,27 +109,26 @@ body {
   font-size: var(--font-size);
 }
 
-/* Стандартизація типографіки згідно з вимогами Figma */
 h1 {
-  font-size: 1.5rem; /* аналог text-2xl */
+  font-size: 1.5rem;
   font-weight: var(--font-weight-medium);
   line-height: 1.5;
 }
 
 h2 {
-  font-size: 1.25rem; /* аналог text-xl */
+  font-size: 1.25rem;
   font-weight: var(--font-weight-medium);
   line-height: 1.5;
 }
 
 h3 {
-  font-size: 1.125rem; /* аналог text-lg */
+  font-size: 1.125rem;
   font-weight: var(--font-weight-medium);
   line-height: 1.5;
 }
 
 h4, label, button {
-  font-size: 1rem; /* аналог text-base */
+  font-size: 1rem;
   font-weight: var(--font-weight-medium);
   line-height: 1.5;
 }

@@ -4,12 +4,10 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import config.DatabaseConfig;
-import models.*; // Імпортуємо всі моделі з пакету
+import models.*;
 
 public class ProductDAO {
-
-    // 1. Твій існуючий метод (залишається без змін)
-    // 1. ОНОВЛЕНИЙ МЕТОД: Збір усього каталогу з усіма характеристиками (ISA Hierarchy JOIN)
+    // 1. Збір усього каталогу з усіма характеристиками (ISA Hierarchy JOIN)
     public List<Product> getAllProducts() {
         List<Product> products = new ArrayList<>();
         
@@ -85,7 +83,7 @@ public class ProductDAO {
         return products;
     }
 
-    // 2. ОНОВЛЕНІЙ МЕТОД: Розумний вибір об'єкта з урахуванням його специфічної таблиці (ISA)
+    // 2. Розумний вибір об'єкта з урахуванням його специфічної таблиці (ISA)
     public Product getProductById(int id) {
         // Спочатку дізнаємося категорію товару
         String checkCategorySql = "SELECT category FROM products WHERE product_id = ?";
@@ -152,6 +150,7 @@ public class ProductDAO {
         return null;
     }
 
+    // Вибір продуктів за категоріями (Гітари, Духові, Клавішні, Ударні)
     public List<Product> getProductsByCategory(String category) {
         List<Product> products = new ArrayList<>();
         String sql = "SELECT * FROM products WHERE category = ?";
@@ -171,7 +170,6 @@ public class ProductDAO {
     }
 
     // --- МЕТОДИ МАПІНГУ ДЛЯ КОЖНОГО КЛАСУ-НАЩАДКА ---
-
     private Product mapRowToProduct(ResultSet rs) throws SQLException {
         return new Product(
             rs.getInt("product_id"),
@@ -190,7 +188,7 @@ public class ProductDAO {
     private Guitars mapRowToGuitars(ResultSet rs) throws SQLException {
         Guitars g = new Guitars();
         populateBaseFields(rs, g); // Заповнюємо поля батька
-        g.setType(rs.getString("sub_type")); // g.type з бази
+        g.setType(rs.getString("sub_type"));
         g.setNeckMaterial(rs.getString("neckMaterial"));
         g.setBodyMaterial(rs.getString("bodyMaterial"));
         g.setNumberOfFrets(rs.getInt("numberOfFrets"));
@@ -251,7 +249,7 @@ public class ProductDAO {
 
         try (Connection conn = config.DatabaseConfig.getConnection()) {
             
-            // 1. Агрегація для верхніх плашок (ВИПРАВЛЕНО: замінено поля дат на createDate)
+            // 1. Агрегація для верхніх плашок
             try (Statement stmt = conn.createStatement()) {
                 try (ResultSet rs = stmt.executeQuery("SELECT COUNT(*) FROM products")) { 
                     if (rs.next()) totalProducts = rs.getInt(1); 
@@ -264,7 +262,7 @@ public class ProductDAO {
                 }
             }
 
-            // 2. Запит продажів за категоріями для Chart.js (ВИПРАВЛЕНО: o.createDate замість o.orderDate)
+            // 2. Запит продажів за категоріями для Chart.js
             String chartSql = "SELECT p.category, SUM(oi.quantity * oi.unitPrice) AS total_revenue " +
                               "FROM order_items oi JOIN products p ON oi.product_id = p.product_id " +
                               "JOIN orders o ON oi.order_id = o.order_id " +
@@ -289,7 +287,7 @@ public class ProductDAO {
                 }
             }
 
-            // 3. Запит деталізації для таблиці популярних товарів (ВИПРАВЛЕНО СТОВПЕЦЬ НА creationDate)
+            // 3. Запит деталізації для таблиці популярних товарів
             String tableSql = "SELECT p.product_id, p.productName, p.category, SUM(oi.quantity) AS sold, SUM(oi.quantity * oi.unitPrice) AS revenue " +
                               "FROM order_items oi " +
                               "JOIN products p ON oi.product_id = p.product_id " +
@@ -326,7 +324,7 @@ public class ProductDAO {
         return new models.AdminReport(totalProducts, ordersToday, monthlyRev, chartData, tableData);
     }
 
-    // 2. ОПЕРАЦІЯ ISA: Каскадне додавання товару через Транзакцію (Транзакційність)
+    // 2. ОПЕРАЦІЯ ISA: Каскадне додавання товару через Транзакцію
     public boolean insertProductWithISA(models.Product p, java.util.Map<String, Object> specificFields, String subTable) {
         String baseSql = "INSERT INTO products (productName, category, manufacturer, price, quantity, `condition`, description, rating, photo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         Connection conn = null;
@@ -465,7 +463,7 @@ public class ProductDAO {
         return false;
     }
 
-    // --- УСКЛАДНЕНИЙ МЕТОД: ПОРІВНЯЛЬНИЙ АНАЛІЗ МІСЯЦЬ ДО МІСЯЦЯ ---
+    // Продажі за місяць за категоріями з порівнянням за попередній місяць
     public List<java.util.Map<String, Object>> getCategoryMonthlyReport(int month, int year) {
         List<java.util.Map<String, Object>> reportData = new ArrayList<>();
         
@@ -601,38 +599,156 @@ public class ProductDAO {
         return popularProducts;
     }
 
-    // --- ДОДАТИ В КЛАС ProductDAO.java (або CustomerDAO.java) ---
     // 7. ЗВІТ АКТИВНОСТІ КЛІЄНТІВ: Рейтинг покупців за кількістю замовлень та сумою витрат
-    public List<java.util.Map<String, Object>> getCustomerActivityReport() {
-        List<java.util.Map<String, Object>> customerReport = new ArrayList<>();
+    public List<java.util.Map<String, Object>> getCustomerActivityReport(String fromDate, String toDate) {
+        List<java.util.Map<String, Object>> report = new ArrayList<>();
         
-        String sql = "SELECT c.customer_id, c.lastName, c.firstName, c.phoneNumber, c.email, " +
-                     "COUNT(DISTINCT o.order_id) AS total_orders, " +
-                     "IFNULL(SUM(oi.quantity * oi.unitPrice), 0) AS total_spent " +
+        // Складний реляційний запит: фільтруємо замовлення за датами безпосередньо в LEFT JOIN
+        String sql = "SELECT c.customer_id, c.lastName, c.firstName, c.phoneNumber, c.email, c.residentialAddress, " +
+                     "o.order_id, o.creationDate, o.orderStatus, " +
+                     "p.productName, p.manufacturer, oi.quantity, oi.unitPrice " +
                      "FROM customers c " +
-                     "LEFT JOIN orders o ON c.customer_id = o.customer_id " +
+                     "LEFT JOIN orders o ON c.customer_id = o.customer_id AND o.creationDate BETWEEN ? AND ? " +
                      "LEFT JOIN order_items oi ON o.order_id = oi.order_id " +
-                     "GROUP BY c.customer_id, c.lastName, c.firstName, c.phoneNumber, c.email " +
-                     "ORDER BY total_spent DESC"; // Спочатку набільші чеки (Топ-клієнти)
+                     "LEFT JOIN products p ON oi.product_id = p.product_id " +
+                     "ORDER BY c.customer_id, o.creationDate DESC";
 
         try (Connection conn = config.DatabaseConfig.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql);
-             ResultSet rs = pstmt.executeQuery()) {
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
             
-            while (rs.next()) {
-                java.util.Map<String, Object> row = new java.util.HashMap<>();
-                row.put("id", rs.getInt("customer_id"));
-                row.put("lastName", rs.getString("lastName"));
-                row.put("firstName", rs.getString("firstName"));
-                row.put("phone", rs.getString("phoneNumber"));
-                row.put("email", rs.getString("email"));
-                row.put("ordersCount", rs.getInt("total_orders"));
-                row.put("totalSpent", rs.getDouble("total_spent"));
-                customerReport.add(row);
+            pstmt.setString(1, fromDate + " 00:00:00");
+            pstmt.setString(2, toDate + " 23:59:59");
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    java.util.Map<String, Object> row = new java.util.HashMap<>();
+                    row.put("id", rs.getInt("customer_id"));
+                    row.put("lastName", rs.getString("lastName"));
+                    row.put("firstName", rs.getString("firstName"));
+                    row.put("phone", rs.getString("phoneNumber"));
+                    row.put("email", rs.getString("email"));
+                    row.put("address", rs.getString("residentialAddress"));
+                    
+                    row.put("orderId", rs.getObject("order_id"));
+                    row.put("orderDate", rs.getString("creationDate"));
+                    row.put("orderStatus", rs.getString("orderStatus"));
+                    row.put("productName", rs.getString("productName"));
+                    row.put("manufacturer", rs.getString("manufacturer"));
+                    row.put("qty", rs.getObject("quantity"));
+                    row.put("unitPrice", rs.getObject("unitPrice"));
+                    
+                    report.add(row);
+                }
             }
         } catch (SQLException e) {
-            System.err.println("Помилка генерації звіту активності клієнтів: " + e.getMessage());
+            System.err.println("Помилка генерації періодичного звіту CRM: " + e.getMessage());
         }
-        return customerReport;
+        return report;
+    }
+
+    // 8. МАСШТАБНИЙ АНАЛІТИЧНИЙ ЗВІТ: Товарний баланс та рух складських запасів за день
+    public List<java.util.Map<String, Object>> getDailyProductMovementReport(String targetDate) {
+        List<java.util.Map<String, Object>> report = new ArrayList<>();
+        
+        // Складний SQL запит, який вираховує продажі за день та поточні залишки
+        String sql = "SELECT p.product_id, p.productName, p.category, p.manufacturer, p.price, " +
+                     "IFNULL(SUM(CASE WHEN DATE(o.creationDate) = ? THEN oi.quantity ELSE 0 END), 0) AS sold_today, " +
+                     "p.quantity AS current_stock " +
+                     "FROM products p " +
+                     "LEFT JOIN order_items oi ON p.product_id = oi.product_id " +
+                     "LEFT JOIN orders o ON oi.order_id = o.order_id " +
+                     "GROUP BY p.product_id, p.productName, p.category, p.manufacturer, p.price, p.quantity";
+
+        try (Connection conn = config.DatabaseConfig.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, targetDate);
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    java.util.Map<String, Object> row = new java.util.HashMap<>();
+                    int soldToday = rs.getInt("sold_today");
+                    int currentStock = rs.getInt("current_stock");
+                    double price = rs.getDouble("price");
+                    
+                    // --- МАТЕМАТИЧНИЙ АУДИТ ТОВАРНОГО БАЛАНСУ ---
+                    // Кінцевий залишок на кінець дня — це те, що є на складі зараз
+                    int endStock = currentStock; 
+                    // Початковий залишок на початок дня
+                    int startStock = endStock + soldToday; 
+                    
+                    // Обсяг виручки в грошах за сьогодні
+                    double revenueToday = soldToday * price;
+
+                    row.put("id", rs.getInt("product_id"));
+                    row.put("name", rs.getString("productName"));
+                    row.put("category", rs.getString("category"));
+                    row.put("manufacturer", rs.getString("manufacturer"));
+                    row.put("price", price);
+                    row.put("startStock", startStock);
+                    row.put("soldToday", soldToday);
+                    row.put("endStock", endStock);
+                    row.put("revenueToday", revenueToday);
+                    
+                    report.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Помилка генерації складського балансу: " + e.getMessage());
+        }
+        return report;
+    }
+
+    // 9. ГЛОБАЛЬНИЙ ФІНАНСОВО-ГОСПОДАРСЬКИЙ ЗВІТ МАГАЗИНУ ЗА ПЕРІОД
+    public List<java.util.Map<String, Object>> getFinancialResultReport(String fromDate, String toDate) {
+        List<java.util.Map<String, Object>> list = new ArrayList<>();
+        
+        String sql = "SELECT p.category, p.product_id, p.productName, p.manufacturer, p.price, " +
+                     "SUM(oi.quantity) AS total_qty, SUM(oi.quantity * oi.unitPrice) AS total_revenue " +
+                     "FROM order_items oi " +
+                     "JOIN products p ON oi.product_id = p.product_id " +
+                     "JOIN orders o ON oi.order_id = o.order_id " +
+                     "WHERE o.creationDate BETWEEN ? AND ? " +
+                     "GROUP BY p.category, p.product_id, p.productName, p.manufacturer, p.price";
+
+        try (Connection conn = config.DatabaseConfig.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            
+            pstmt.setString(1, fromDate + " 00:00:00");
+            pstmt.setString(2, toDate + " 23:59:59");
+            
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    java.util.Map<String, Object> row = new java.util.HashMap<>();
+                    
+                    // Перекладаємо системну назву категорії для фронтенду
+                    String cat = rs.getString("category");
+                    String ukrCat = cat.equals("Guitars") ? "Гітари" : cat.equals("Keyboards") ? "Клавішні" : cat.equals("Drums") ? "Ударні" : "Духові";
+                    
+                    double revenue = rs.getDouble("total_revenue");
+                    double costPrice = revenue * 0.70; // 70% собівартість
+                    double grossProfit = revenue - costPrice;
+                    double tax = revenue * 0.05; // 5% податок
+
+                    // НАДБАВКА: Передаємо реальні номенклатурні дані інструменту
+                    row.put("category", ukrCat);
+                    row.put("id", rs.getInt("product_id"));
+                    row.put("name", rs.getString("productName"));
+                    row.put("manufacturer", rs.getString("manufacturer"));
+                    row.put("unitPrice", rs.getDouble("price")); // Окрема ціна за 1 шт.
+                    
+                    row.put("qty", rs.getInt("total_qty"));
+                    row.put("revenue", revenue);
+                    row.put("costPrice", costPrice);
+                    row.put("grossProfit", grossProfit);
+                    row.put("tax", tax);
+                    
+                    list.add(row);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Помилка генерації деталізованого фінансового звіту: " + e.getMessage());
+        }
+        return list;
     }
 }

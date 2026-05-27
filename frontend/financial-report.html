@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Фінансовий звіт діяльності | MusicStore</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; color: black; padding: 0; }
+            .print-container { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
+            .print-card { border: 1px solid #e5e7eb !important; box-shadow: none !important; }
+            tr.bg-gray-50 { background-color: #f9fafb !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            tr.bg-emerald-50\/30 { background-color: #ecfdf5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen">
+
+    <div id="header-placeholder" class="no-print"></div>
+
+    <div class="max-w-6xl mx-auto px-4 py-8 space-y-6 print-container">
+        
+        <nav class="flex text-sm text-gray-500 no-print" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li><a href="index.html" class="hover:text-blue-600 transition-colors"><i data-lucide="store" class="w-4 h-4"></i></a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li><a href="admin-dashboard.html" class="hover:text-blue-600 transition-colors font-medium">Панель</a></li>
+                <li><i data-lucide="chevron-right" class="w-4 h-4 text-gray-400"></i></li>
+                <li class="text-gray-900 font-semibold">Звіт про фінансово-господарську діяльність</li>
+            </ol>
+        </nav>
+
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-200 pb-4">
+            <div>
+                <span class="text-xs font-bold text-blue-600 uppercase tracking-widest no-print">Звітна документація СУБД</span>
+                <h1 class="text-2xl sm:text-3xl font-black text-gray-900 flex items-center gap-2 mt-1">
+                    Звіт про фінансові результати та прибутковість
+                </h1>
+                <p class="text-xs text-gray-400 mt-1 font-medium">Форма затверджена фінансовим відділом MusicStore | Виконавець: Олександр Федосюк</p>
+            </div>
+            <button onclick="window.print()" class="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 font-bold rounded-xl border border-gray-200 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm shadow-xs no-print">
+                <i data-lucide="printer" class="w-4 h-4 text-gray-500"></i> Друкувати фінансовий звіт
+            </button>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl shadow-xs border border-gray-100 flex flex-col sm:flex-row items-end gap-4 no-print">
+            <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 w-full">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Аналітичний період з</label>
+                    <input type="date" id="finFrom" value="2026-01-01" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-1">По дату</label>
+                    <input type="date" id="finTo" value="2026-12-31" class="w-full px-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 focus:outline-none focus:border-blue-500">
+                </div>
+            </div>
+            <button onclick="buildFinancialReport()" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl text-sm transition-colors cursor-pointer shadow-xs flex items-center justify-center gap-2">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Сформувати звіт
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-2xs print-card">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-tight">Дохід (виручка) від реалізації</p>
+                <p id="cardRevenue" class="text-xl font-black text-gray-900 mt-1">0 ₴</p>
+            </div>
+            
+            <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-2xs print-card">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-tight">Валовий прибуток (маржа)</p>
+                <p id="cardGrossProfit" class="text-xl font-black text-emerald-600 mt-1">0 ₴</p>
+            </div>
+            
+            <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-2xs print-card">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-tight">Операційні витрати усього</p>
+                <p id="cardExpenses" class="text-xl font-black text-red-500 mt-1">0 ₴</p>
+            </div>
+            
+            <div id="cardNetProfitContainer" class="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 shadow-2xs print-card">
+                <p class="text-[10px] font-bold text-emerald-800/80 uppercase tracking-wider leading-tight">Чистий фінансовий результат</p>
+                <p id="cardNetProfit" class="text-xl font-black text-emerald-700 mt-1">0 ₴</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 bg-white rounded-2xl shadow-xs border border-gray-100 overflow-hidden flex flex-col print-card">
+                <div class="p-4 border-b border-gray-100 font-bold bg-gray-50/50 text-gray-800 text-sm flex justify-between items-center">
+                    <span class="flex items-center gap-2"><i data-lucide="layers" class="w-4 h-4 text-gray-400"></i> Структура маржинальності за категоріями</span>
+                    <span class="text-[11px] font-medium text-blue-600 bg-blue-50/50 px-2 py-0.5 rounded-md no-print">Деревоподібний перегляд</span>
+                </div>
+                <div class="overflow-x-auto flex-1">
+                    <table class="w-full text-left border-collapse min-w-[550px]">
+                        <thead class="bg-gray-50 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                            <tr>
+                                <th class="py-3 px-4 w-1/2">Категорія / Назва проданого інструменту</th>
+                                <th class="py-3 px-4 text-right">Дохід (виручка) від реалізації продукції (товарів)</th>
+                                <th class="py-3 px-4 text-right">Собівартість реалізованої продукції (купівельна вартість товарів)</th>
+                                <th class="py-3 px-4 text-right text-emerald-700">Валовий прибуток (маржа)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="financialTableBody" class="divide-y divide-gray-100 text-sm">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-xs border border-gray-100 p-5 space-y-4 print-card h-fit">
+                <h3 class="text-sm font-black text-gray-900 border-b pb-3 uppercase tracking-wide flex items-center gap-2">
+                    <i data-lucide="file-text" class="w-4 h-4 text-gray-400"></i> Розрахунок чистих фінансових результатів
+                </h3>
+                
+                <div class="space-y-3 text-sm">
+                    <div class="flex justify-between text-gray-600">
+                        <span>1. Дохід (виручка) від реалізації (+)</span>
+                        <span id="docRevenue" class="font-bold text-gray-900">0 ₴</span>
+                    </div>
+                    <div class="flex justify-between text-gray-600 border-b pb-2">
+                        <span>2. Собівартість товарів (-)</span>
+                        <span id="docCostPrice" class="font-medium text-red-600">0 ₴</span>
+                    </div>
+                    <div class="flex justify-between items-center font-bold text-gray-900 border-b pb-3 pt-1">
+                        <span>Валовий прибуток (форма №2)</span>
+                        <span id="docGrossProfit" class="text-emerald-600 text-base">0 ₴</span>
+                    </div>
+
+                    <div class="text-xs font-bold text-gray-400 uppercase pt-2">3. Витрати усього, у т.ч.:</div>
+                    <div class="flex justify-between text-gray-500 pl-2 text-xs">
+                        <span>• Купівельна собівартість товарів</span>
+                        <span id="docCostPriceDetail" class="font-medium text-gray-700">0 ₴</span>
+                    </div>
+                    <div class="flex justify-between text-gray-500 pl-2 text-xs">
+                        <span>• Оренда залу та складу</span>
+                        <span class="font-medium text-gray-700">15,000 ₴</span>
+                    </div>
+                    <div class="flex justify-between text-gray-500 pl-2 text-xs">
+                        <span>• ФОП Зарплата персоналу</span>
+                        <span class="font-medium text-gray-700">25,000 ₴</span>
+                    </div>
+                    <div class="flex justify-between text-gray-500 pl-2 text-xs border-b pb-3">
+                        <span>• Операційна логістика (3%)</span>
+                        <span id="docLogistics" class="font-medium text-gray-700">0 ₴</span>
+                    </div>
+
+                    <div class="flex justify-between text-gray-600 pt-1">
+                        <span>4. Фінансовий результат до оподаткування (EBT)</span>
+                        <span id="docEBT" class="font-bold text-gray-900">0 ₴</span>
+                    </div>
+                    <div class="flex justify-between text-gray-600 border-b table-layout pb-4">
+                        <span>5. Податки (Єдиний податок 5%) (-)</span>
+                        <span id="docTaxes" class="font-medium text-red-600">0 ₴</span>
+                    </div>
+
+                    <div id="docNetProfitContainer" class="p-3.5 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center justify-between gap-4 mt-4">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-bold text-emerald-800 uppercase tracking-wide truncate">Чистий прибуток (збиток)</p>
+                            <p class="text-[10px] text-emerald-500 truncate">Стаття 2350 / Чистий фінансовий результат</p>
+                        </div>
+                        <span id="docNetProfit" class="text-xl font-black text-emerald-700 whitespace-nowrap">0 ₴</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/header.js" class="no-print"></script>
+    <script src="js/toast.js" class="no-print"></script>
+    <script src="js/financial-report.js"></script>
+</body>
+</html>

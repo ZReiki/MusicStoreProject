@@ -5,12 +5,12 @@ const saveBtnText = document.getElementById("saveBtnText");
 const formTitle = document.getElementById("mainFormTitle");
 const formSubtitle = document.getElementById("mainFormSubtitle");
 
-// 1. ВИЗНАЧАЄМО РЕЖИМ (Додавання чи Редагування)
+// Визначення режиму роботи сторінки: створення або редагування товару
 const urlParams = new URLSearchParams(window.location.search);
 const editProductId = urlParams.get('id');
 const isEditMode = editProductId !== null;
 
-// Запуск при повному завантаженні сторінки браузером
+// Ініціалізація сторінки після повного завантаження DOM
 document.addEventListener("DOMContentLoaded", () => {
     if (isEditMode) {
         preparePageForEditMode();
@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 async function preparePageForEditMode() {
+    // Оновлення елементів інтерфейсу для режиму редагування
     formTitle.textContent = "Редагування інформації про товар";
     formSubtitle.textContent = `Модифікація атрибутів інструменту з ID: ${editProductId.padStart(6, '0')}`;
     saveBtnText.textContent = "Оновити інструмент у базі даних";
@@ -30,15 +31,17 @@ async function preparePageForEditMode() {
     const breadcrumbActive = document.getElementById("breadcrumbActive");
     if(breadcrumbActive) breadcrumbActive.innerHTML = `<i data-lucide="edit-3" class="w-4 h-4 text-amber-600"></i> Редагування інструменту`;
 
+    // Блокування зміни категорії під час редагування
     categorySelect.disabled = true;
     categorySelect.parentNode.classList.add("opacity-60", "cursor-not-allowed");
 
     try {
+        // Отримання даних товару з сервера
         const response = await fetch(`http://localhost:8080/api/products?id=${editProductId}`);
         if (!response.ok) throw new Error("Товар не знайдено в базі");
         const product = await response.json();
 
-        // Заповнюємо базові поля
+        // Заповнення основних полів форми
         document.getElementById("productName").value = product.productName || "";
         document.getElementById("manufacturer").value = product.manufacturer || "";
         document.getElementById("price").value = product.price || 0;
@@ -52,7 +55,7 @@ async function preparePageForEditMode() {
         const activeBlock = document.getElementById(`fields-${sysCat}`);
         if (activeBlock) activeBlock.classList.remove("hidden");
 
-        // Заповнюємо специфічні поля субтаблиць (ISA)
+        // Заповнення полів відповідної категорії товару
         if (sysCat === "guitars") {
             document.getElementById("guitarType").value = product.type || "";
             document.getElementById("guitarBody").value = product.bodyMaterial || "";
@@ -79,28 +82,35 @@ async function preparePageForEditMode() {
 
     } catch (error) {
         console.error("Помилка завантаження даних для редагування:", error);
+
+        // Відображення повідомлення про помилку
         if (typeof showToast === 'function') {
             showToast("Помилка завантаження даних товару з БД!", "error");
         }
     }
 }
 
-// 2. ДИНАМІЧНЕ ПЕРЕМИКАННЯ ПОЛІВ ISA СУБТАБЛИЦЬ
+// Перемикання відображення полів залежно від обраної категорії
 categorySelect.addEventListener("change", function(e) {
     const selectedCategory = e.target.value;
+
+    // Приховування всіх блоків специфічних полів
     document.querySelectorAll(".isa-fields").forEach(block => block.classList.add("hidden"));
 
+    // Відображення полів активної категорії
     if (selectedCategory) {
         const activeBlock = document.getElementById(`fields-${selectedCategory}`);
         if (activeBlock) activeBlock.classList.remove("hidden");
     }
+
     if (window.lucide) lucide.createIcons();
 });
 
-// 3. НАДСИЛАННЯ НА СЕРВЕР (Транзакційне додавання або Оновлення)
+// Обробка відправки форми створення або редагування товару
 addProductForm.addEventListener("submit", async function(e) {
     e.preventDefault();
 
+    // Отримання даних із форми
     const name = document.getElementById("productName").value.trim();
     const manufacturer = document.getElementById("manufacturer").value.trim();
     const price = parseFloat(document.getElementById("price").value);
@@ -109,7 +119,7 @@ addProductForm.addEventListener("submit", async function(e) {
     const description = document.getElementById("description").value.trim();
     const category = categorySelect.value;
 
-    // ВАЛІДАЦІЯ З ВИКОРИСТАННЯМ КРАСИВИХ TOASTS
+    // Перевірка коректності введеної ціни
     if (price <= 0) {
         if (typeof showToast === 'function') {
             showToast("Ціна інструменту повинна бути більшою за 0 ₴!", "error");
@@ -117,6 +127,7 @@ addProductForm.addEventListener("submit", async function(e) {
         return;
     }
 
+    // Перевірка коректності кількості товару
     if (quantity < 0) {
         if (typeof showToast === 'function') {
             showToast("Кількість товару на складі не може бути від'ємною!", "error");
@@ -125,6 +136,8 @@ addProductForm.addEventListener("submit", async function(e) {
     }
 
     let specificData = {};
+
+    // Формування специфічних даних залежно від категорії товару
     if (category === "guitars") {
         specificData = {
             type: document.getElementById("guitarType").value.trim(),
@@ -155,6 +168,7 @@ addProductForm.addEventListener("submit", async function(e) {
         };
     }
 
+    // Формування об'єкта для відправки на сервер
     const payload = {
         productName: name,
         category: category,
@@ -166,20 +180,23 @@ addProductForm.addEventListener("submit", async function(e) {
         specificData: specificData
     };
 
+    // Додавання ID товару в режимі редагування
     if (isEditMode) {
         payload.productId = parseInt(editProductId);
     }
 
-    // Блокування кнопки та активація лоадера (Spinner)
+    // Блокування кнопки та відображення індикатора завантаження
     const originalContent = saveBtn.innerHTML;
     saveBtn.disabled = true;
     saveBtn.classList.add("opacity-70");
     saveBtn.innerHTML = '<div class="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>';
 
+    // Визначення URL та HTTP-методу залежно від режиму роботи
     const apiUrl = isEditMode ? 'http://localhost:8080/api/admin/update-product' : 'http://localhost:8080/api/admin/add-product';
     const httpMethod = isEditMode ? 'PUT' : 'POST';
 
     try {
+        // Надсилання даних на сервер
         const response = await fetch(apiUrl, {
             method: httpMethod,
             headers: { 'Content-Type': 'application/json' },
@@ -187,10 +204,12 @@ addProductForm.addEventListener("submit", async function(e) {
         });
 
         if (!response.ok) throw new Error("Помилка транзакції СУБД");
+
         const data = await response.json();
 
         if (data.status === "success") {
-            // ДОДАНО ДИНАМІЧНІ ПОВІДОМЛЕННЯ (TOASTS) ДЛЯ РЕДАГУВАННЯ ТА СТВОРЕННЯ
+
+            // Відображення повідомлення про успішне виконання операції
             if (typeof showToast === 'function') {
                 if (isEditMode) {
                     showToast(`Інструмент "${name}" успішно оновлено в базі даних!`, "success");
@@ -200,28 +219,34 @@ addProductForm.addEventListener("submit", async function(e) {
             }
 
             if (!isEditMode) {
-                // Якщо створювали новий — повністю очищуємо форму для наступного вводу
+                // Очищення форми після створення нового товару
                 addProductForm.reset();
                 document.querySelectorAll(".isa-fields").forEach(block => block.classList.add("hidden"));
             } else {
-                // Якщо редагували — плавно повертаємо менеджера на головний дашборд через 1.2 секунди
+                // Перехід до панелі адміністратора після редагування
                 setTimeout(() => window.location.href = 'admin-dashboard.html', 1200);
             }
+
         } else {
             if (typeof showToast === 'function') {
                 showToast("Помилка бази даних: " + data.message, "error");
             }
         }
+
     } catch (error) {
         console.error("Помилка відправки:", error);
+
+        // Відображення повідомлення про помилку з'єднання
         if (typeof showToast === 'function') {
             showToast("Не вдалося зв'язатися з сервером Java!", "error");
         }
+
     } finally {
-        // Повертаємо кнопку до початкового стану
+        // Відновлення початкового стану кнопки
         saveBtn.disabled = false;
         saveBtn.classList.remove("opacity-70");
         saveBtn.innerHTML = originalContent;
+
         if (window.lucide) lucide.createIcons();
     }
 });

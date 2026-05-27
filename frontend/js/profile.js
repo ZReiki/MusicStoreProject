@@ -35,7 +35,6 @@ function fillProfileFields() {
     document.getElementById("profileAddress").value = currentUser.address === "Не вказано" ? "" : currentUser.address;
 }
 
-// --- Знайди функцію switchProfileTab у js/profile.js і додай умову в кінець: ---
 function switchProfileTab(tabId) {
     document.querySelectorAll(".profile-tab-content").forEach(el => el.classList.add("hidden"));
     document.querySelectorAll(".profile-tab-btn").forEach(btn => {
@@ -45,7 +44,6 @@ function switchProfileTab(tabId) {
     document.getElementById(`profileTab-${tabId}`).classList.remove("hidden");
     document.getElementById(`tabBtn-${tabId}`).className = "profile-tab-btn flex items-center gap-3 px-6 py-4 text-sm font-medium border-l-4 border-blue-600 bg-blue-50 text-blue-600 transition-all w-full text-left cursor-pointer";
     
-    // ДОДАНО: Якщо адмін або покупець перейшов на вкладку замовлень — скануємо базу даних!
     if (tabId === 'orders') {
         loadCustomerOrdersHistory();
     }

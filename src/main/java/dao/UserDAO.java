@@ -45,7 +45,7 @@ public class UserDAO {
             pstmt.setString(2, customer.getFirstName());
             pstmt.setString(3, customer.getPhoneNumber());
             pstmt.setString(4, customer.getEmail());
-            pstmt.setString(5, customer.getResidentialAddress()); // Тут на початку передамо null або пустий рядок
+            pstmt.setString(5, customer.getResidentialAddress());
 
             int affectedRows = pstmt.executeUpdate();
             if (affectedRows > 0) {
@@ -107,12 +107,12 @@ public class UserDAO {
         return false;
     }
 
-    // --- ДОДАТИ В КЛАС UserDAO.java ---
     // Отримання історії замовлень клієнта з підрахунком кількості позицій
     public List<java.util.Map<String, Object>> getCustomerOrders(int customerId) {
         List<java.util.Map<String, Object>> ordersList = new ArrayList<>();
+        
         String sql = "SELECT o.order_id, o.creationDate, o.orderStatus, o.totalPrice, " +
-                     "COUNT(oi.order_item_id) AS total_items " +
+                     "IFNULL(SUM(oi.quantity), 0) AS total_items " +
                      "FROM orders o " +
                      "LEFT JOIN order_items oi ON o.order_id = oi.order_id " +
                      "WHERE o.customer_id = ? " +
@@ -131,30 +131,53 @@ public class UserDAO {
                     order.put("creationDate", rs.getString("creationDate"));
                     order.put("orderStatus", rs.getString("orderStatus"));
                     order.put("totalPrice", rs.getDouble("totalPrice"));
-                    order.put("totalItems", rs.getInt("total_items"));
+                    order.put("totalItems", rs.getInt("total_items")); // Тепер тут буде 5, а не 1
                     ordersList.add(order);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Помилка отримання історії замовлень клієнта: " + e.getMessage());
+            System.err.println("Помилка отримання історії замовлень: " + e.getMessage());
         }
         return ordersList;
     }
 
-    // --- ДОДАТИ В КЛАС UserDAO.java ---
     // ТРАНЗАКЦІЙНЕ ОФОРМЛЕННЯ ЗАМОВЛЕННЯ (Схема Master-Detail)
     public boolean checkoutOrder(int customerId, double totalPrice, List<java.util.Map<String, Object>> cartItems) {
+        String checkStockSql = "SELECT productName, quantity FROM products WHERE product_id = ?";
         String orderSql = "INSERT INTO orders (customer_id, employee_id, creationDate, orderStatus, totalPrice) VALUES (?, NULL, NOW(), 'Pending', ?)";
         String itemSql = "INSERT INTO order_items (order_id, product_id, quantity, unitPrice) VALUES (?, ?, ?, ?)";
+        String updateStockSql = "UPDATE products SET quantity = quantity - ? WHERE product_id = ?";
         
         Connection conn = null;
         try {
             conn = config.DatabaseConfig.getConnection();
-            conn.setAutoCommit(false); // Вмикаємо суворий режим транзакції ACID
+            conn.setAutoCommit(false); // Вмикаємо ACID режим ручного контролю транзакції
+
+            // КРОК 0: Серверна сувора перевірка залишків (захист від паралельних покупок)
+            for (java.util.Map<String, Object> item : cartItems) {
+                int productId = ((Double) item.get("productId")).intValue();
+                int requestedQty = ((Double) item.get("quantity")).intValue();
+
+                try (PreparedStatement pstmt = conn.prepareStatement(checkStockSql)) {
+                    pstmt.setInt(1, productId);
+                    try (ResultSet rs = pstmt.executeQuery()) {
+                        if (rs.next()) {
+                            int actualStock = rs.getInt("quantity");
+                            String prodName = rs.getString("productName");
+                            if (actualStock < requestedQty) {
+                                // Якщо товару не вистачає, ми кидаємо виняток, який скасує (rollback) всю транзакцію
+                                throw new SQLException("Недостатньо одиниць товару '" + prodName + "' на складі! Доступно: " + actualStock + " шт.");
+                            }
+                        } else {
+                            throw new SQLException("Товар з ID " + productId + " не знайдено в СУБД!");
+                        }
+                    }
+                }
+            }
 
             int generatedOrderId = 0;
             
-            // 1. Вносимо головний запис у таблицю 'orders'
+            // КРОК 1: Вносимо головний запис у таблицю 'orders'
             try (PreparedStatement pstmt = conn.prepareStatement(orderSql, Statement.RETURN_GENERATED_KEYS)) {
                 pstmt.setInt(1, customerId);
                 pstmt.setDouble(2, totalPrice);
@@ -165,37 +188,51 @@ public class UserDAO {
                 }
             }
 
-            // 2. Вносимо деталі замовлення в циклі в таблицю 'order_items'
+            // КРОК 2: Вносимо деталі чека в 'order_items' та паралельно списуємо залишки
             if (generatedOrderId > 0) {
-                try (PreparedStatement pstmt = conn.prepareStatement(itemSql)) {
+                try (PreparedStatement pstmtItem = conn.prepareStatement(itemSql);
+                     PreparedStatement pstmtStock = conn.prepareStatement(updateStockSql)) {
+                    
                     for (java.util.Map<String, Object> item : cartItems) {
-                        // Розбираємо прихований JSON-пакет з фронтенду
                         int productId = ((Double) item.get("productId")).intValue();
                         int quantity = ((Double) item.get("quantity")).intValue();
                         double unitPrice = (Double) item.get("unitPrice");
 
-                        pstmt.setInt(1, generatedOrderId);
-                        pstmt.setInt(2, productId);
-                        pstmt.setInt(3, quantity);
-                        pstmt.setDouble(4, unitPrice);
-                        pstmt.addBatch(); // Додаємо до пакетного виконання
+                        // Додаємо запис у пакет чека order_items
+                        pstmtItem.setInt(1, generatedOrderId);
+                        pstmtItem.setInt(2, productId);
+                        pstmtItem.setInt(3, quantity);
+                        pstmtItem.setDouble(4, unitPrice);
+                        pstmtItem.addBatch();
+
+                        // Додаємо оновлення складу у пакет списання products
+                        pstmtStock.setInt(1, quantity);
+                        pstmtStock.setInt(2, productId);
+                        pstmtStock.addBatch();
                     }
-                    pstmt.executeBatch(); // Виконуємо масовий інсерт за один такт СУБД
+                    
+                    pstmtItem.executeBatch();  // Масовий інсерт позицій
+                    pstmtStock.executeBatch(); // Масове зменшення кількості на складі
                 }
             }
 
-            conn.commit(); // Завершуємо транзакцію успішно
+            conn.commit(); // Зберігаємо всі зміни каскадно та атомарно
             return true;
         } catch (SQLException e) {
-            System.err.println("Помилка транзакції замовлення кошика! Відкат... " + e.getMessage());
+            System.err.println("Помилка транзакції оформлення! Виконуємо повний відкат від змін СУБД: " + e.getMessage());
             if (conn != null) {
-                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
+                try { 
+                    conn.rollback(); // Повертаємо БД до початкового стану
+                } catch (SQLException ex) { 
+                    ex.printStackTrace(); 
+                }
             }
+            // Передаємо повідомлення про помилку залишків нагору в контролер
+            throw new RuntimeException(e.getMessage());
         } finally {
             if (conn != null) {
                 try { conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
             }
         }
-        return false;
     }
 }
