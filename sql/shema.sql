@@ -1,5 +1,6 @@
 /* Сценарій створення бази даних для інформаційної системи магазину музичних інструментів "MusicStore"*/
 
+DROP DATABASE IF EXISTS `musicStore`;
 CREATE DATABASE IF NOT EXISTS musicStore;
 USE musicStore;
 
